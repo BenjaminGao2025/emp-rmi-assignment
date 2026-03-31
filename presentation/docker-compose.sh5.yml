@@ -1,0 +1,8 @@
+services:
+  presentation:
+    image: emp-rmi-presentation:latest
+    platform: linux/amd64
+    container_name: emp-rmi-presentation
+    restart: unless-stopped
+    ports:
+      - "8081:8081"

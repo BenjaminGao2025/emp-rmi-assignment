@@ -1,0 +1,78 @@
+services:
+  local-app:
+    build: .
+    environment:
+      APP_MAIN_CLASS: com.example.EmpDBConsoleApp
+      EMP_DB_PATH: /app/data/runtime/CSCI7785_database.db
+    volumes:
+      - ./data:/app/data
+    stdin_open: true
+    tty: true
+
+  rmi-server:
+    build: .
+    environment:
+      APP_MAIN_CLASS: com.example.server.ServerMain
+      EMP_DB_PATH: /app/data/runtime/CSCI7785_database.db
+      RMI_HOST: rmi-server
+      RMI_REGISTRY_PORT: "1099"
+      RMI_OBJECT_PORT: "2001"
+    volumes:
+      - ./data:/app/data
+
+  rmi-client:
+    build: .
+    environment:
+      APP_MAIN_CLASS: com.example.client.RmiClientMain
+      RMI_SERVER_HOST: rmi-server
+      RMI_SERVER_PORT: "1099"
+    volumes:
+      - ./data:/app/data
+    depends_on:
+      - rmi-server
+    stdin_open: true
+    tty: true
+
+  client-read:
+    build: .
+    profiles: ["experiment"]
+    environment:
+      APP_MAIN_CLASS: com.example.client.RmiClientMain
+      RMI_SERVER_HOST: rmi-server
+      RMI_SERVER_PORT: "1099"
+    command: ["list"]
+    depends_on:
+      - rmi-server
+
+  client-insert:
+    build: .
+    profiles: ["experiment"]
+    environment:
+      APP_MAIN_CLASS: com.example.client.RmiClientMain
+      RMI_SERVER_HOST: rmi-server
+      RMI_SERVER_PORT: "1099"
+    command: ["add", "E9", "A. Chen", "Programmer"]
+    depends_on:
+      - rmi-server
+
+  client-update:
+    build: .
+    profiles: ["experiment"]
+    environment:
+      APP_MAIN_CLASS: com.example.client.RmiClientMain
+      RMI_SERVER_HOST: rmi-server
+      RMI_SERVER_PORT: "1099"
+    command: ["update", "E2", "M. Smith", "Programmer"]
+    depends_on:
+      - rmi-server
+
+  client-delete:
+    build: .
+    profiles: ["experiment"]
+    environment:
+      APP_MAIN_CLASS: com.example.client.RmiClientMain
+      RMI_SERVER_HOST: rmi-server
+      RMI_SERVER_PORT: "1099"
+    command: ["delete", "E8"]
+    depends_on:
+      - rmi-server

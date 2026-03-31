@@ -1,0 +1,7 @@
+services:
+  rmi-server:
+    environment:
+      RMI_HOST: 100.101.245.68
+    ports:
+      - "1099:1099"
+      - "2001:2001"

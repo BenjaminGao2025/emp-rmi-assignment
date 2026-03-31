@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EMP RMI Assignment | English Presentation</title>
+    <link rel="stylesheet" href="./shared.css" />
+    <script defer src="./shared.js"></script>
+  </head>
+  <body class="deck-body">
+    <div class="floating-toolbar">
+      <div class="toolbar-group">
+        <a class="toolbar-link" href="./index.html">Back</a>
+        <div class="toolbar-brand">EMP RMI Assignment</div>
+        <div class="toolbar-status" data-slide-title></div>
+      </div>
+      <div class="toolbar-group">
+        <a class="toolbar-link" href="./presentation-zh.html">Chinese notes</a>
+        <a class="toolbar-link" href="./downloads/README.md" download="README.md">Download README</a>
+        <a class="toolbar-link" href="./downloads/emp-rmi-assignment.zip" download="emp-rmi-assignment.zip">Download source</a>
+        <div class="toolbar-status" data-counter></div>
+      </div>
+    </div>
+
+    <main class="deck-shell">
+      <div class="deck-frame">
+        <div class="slides">
+          <section
+            class="slide"
+            id="cover"
+            data-title="From Local SQLite to Distributed Java RMI"
+            data-short="Cover"
+            data-progress="Opening and scope"
+          >
+            <div class="eyebrow">Slide 1</div>
+            <h1>From Local SQLite to Distributed Java RMI</h1>
+            <p class="slide-subtitle">
+              Turning the EMP console program into a distributed service with manual transactions,
+              Docker deployment, and concurrency experiments.
+            </p>
+            <div class="metric-grid">
+              <div class="metric">
+                <div class="metric-label">Original stack</div>
+                <div class="metric-value">Java + JDBC + SQLite</div>
+                <div class="metric-copy">Single-machine console app</div>
+              </div>
+              <div class="metric">
+                <div class="metric-label">Target stack</div>
+                <div class="metric-value">RMI client/server</div>
+                <div class="metric-copy">Database owned by the server</div>
+              </div>
+              <div class="metric">
+                <div class="metric-label">Deployment</div>
+                <div class="metric-value">Docker on sh5</div>
+                <div class="metric-copy">Ubuntu host with reproducible runtime</div>
+              </div>
+            </div>
+            <div class="highlight-card">
+              <h3>One-sentence summary</h3>
+              <p class="lede">
+                I upgraded a local employee database program into a distributed Java RMI system,
+                then added explicit transactions and concurrent client experiments to observe
+                SQLite behavior.
+              </p>
+            </div>
+          </section>
+
+          <section
+            class="slide"
+            id="assignment"
+            data-title="What the Assignment Required"
+            data-short="Requirements"
+            data-progress="Assignment framing"
+          >
+            <div class="eyebrow">Slide 2</div>
+            <h2>What the assignment required</h2>
+            <div class="timeline">
+              <div class="timeline-item">
+                <div class="timeline-number">1</div>
+                <div class="timeline-copy">
+                  <h3>Run the original EMP program</h3>
+                  <p>Understand the existing SQLite-backed console workflow.</p>
+                </div>
+              </div>
+              <div class="timeline-item">
+                <div class="timeline-number">2</div>
+                <div class="timeline-copy">
+                  <h3>Convert it to Java RMI</h3>
+                  <p>Move EMP operations behind a remote object on the server.</p>
+                </div>
+              </div>
+              <div class="timeline-item">
+                <div class="timeline-number">3</div>
+                <div class="timeline-copy">
+                  <h3>Enable manual transactions</h3>
+                  <p>Replace default auto-commit with explicit commit and rollback.</p>
+                </div>
+              </div>
+              <div class="timeline-item">
+                <div class="timeline-number">4</div>
+                <div class="timeline-copy">
+                  <h3>Run concurrent transaction experiments</h3>
+                  <p>Observe what happens when multiple clients read and write together.</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section
+            class="slide"
+            id="original"
+            data-title="Original Program: Local and Monolithic"
+            data-short="Original"
+            data-progress="Baseline architecture"
+          >
+            <div class="eyebrow">Slide 3</div>
+            <h2>Original program: local and monolithic</h2>
+            <div class="diagram">
+              <div class="diagram-node">
+                <em>User</em>
+                <strong>Console menu</strong>
+                <p>The user enters commands in a single Java program.</p>
+              </div>
+              <div class="diagram-arrow">→</div>
+              <div class="diagram-node">
+                <em>Application</em>
+                <strong>JDBC calls</strong>
+                <p>The same process opens SQLite connections and runs SQL directly.</p>
+              </div>
+              <div class="diagram-arrow">→</div>
+              <div class="diagram-node">
+                <em>Storage</em>
+                <strong>SQLite file</strong>
+                <p>Everything happens on one machine, so there is no distributed boundary.</p>
+              </div>
+            </div>
+            <div class="grid-two">
+              <div class="panel">
+                <h3>Good for</h3>
+                <ul>
+                  <li>Learning the schema and existing CRUD workflow</li>
+                  <li>Single-user local execution</li>
+                  <li>Quick verification of the EMP table</li>
+                </ul>
+              </div>
+              <div class="panel">
+                <h3>Not enough for this assignment</h3>
+                <ul>
+                  <li>No remote interface</li>
+                  <li>No server-side ownership of the database</li>
+                  <li>No clean place to control transactions for many clients</li>
+                </ul>
+              </div>
+            </div>
+          </section>
+
+          <section
+            class="slide"
+            id="design"
+            data-title="Distributed Design with RMI"
+            data-short="RMI design"
+            data-progress="New architecture"
+          >
+            <div class="eyebrow">Slide 4</div>
+            <h2>Distributed design with RMI</h2>
+            <div class="diagram">
+              <div class="diagram-node">
+                <em>Client</em>
+                <strong>RMI client</strong>
+                <p>Calls remote methods such as <code>list</code>, <code>find</code>, or <code>update</code>.</p>
+              </div>
+              <div class="diagram-arrow">→</div>
+              <div class="diagram-node">
+                <em>Network</em>
+                <strong>Registry 1099 + object 2001</strong>
+                <p>Fixed ports make Docker networking predictable.</p>
+              </div>
+              <div class="diagram-arrow">→</div>
+              <div class="diagram-node">
+                <em>Server</em>
+                <strong>EmpService + service layer</strong>
+                <p>All SQL, transactions, and validation stay on the server side.</p>
+              </div>
+              <div class="diagram-arrow">→</div>
+              <div class="diagram-node">
+                <em>Data</em>
+                <strong>SQLite database</strong>
+                <p>The database file is only accessed inside the server container.</p>
+              </div>
+            </div>
+            <div class="grid-two">
+              <div class="panel">
+                <h3>Why the database belongs on the server</h3>
+                <ul>
+                  <li>The client should not know JDBC or SQLite details.</li>
+                  <li>Transaction logic stays centralized and consistent.</li>
+                  <li>Concurrency experiments become easier to control and observe.</li>
+                </ul>
+              </div>
+              <div class="panel">
+                <h3>Remote operations exposed</h3>
+                <ul>
+                  <li><code>listEmployees()</code></li>
+                  <li><code>findEmployeeById()</code></li>
+                  <li><code>addEmployee()</code></li>
+                  <li><code>updateEmployee()</code></li>
+                  <li><code>deleteEmployee()</code></li>
+                </ul>
+              </div>
+            </div>
+          </section>
+
+          <section
+            class="slide"
+            id="transactions"
+            data-title="Manual Transactions and Connection Scope"
+            data-short="Transactions"
+            data-progress="Transaction model"
+          >
+            <div class="eyebrow">Slide 5</div>
+            <h2>Manual transactions and connection scope</h2>
+            <div class="grid-two">
+              <div class="panel">
+                <h3>Key rule</h3>
+                <p>
+                  Each remote request gets its own JDBC connection. I do <strong>not</strong>
+                  share one global connection across all client threads.
+                </p>
+                <ul>
+                  <li>Open connection inside the remote request</li>
+                  <li>Set <code>autoCommit(false)</code> for writes</li>
+                  <li><code>commit()</code> on success</li>
+                  <li><code>rollback()</code> on failure</li>
+                  <li>Close the connection in <code>finally</code></li>
+                </ul>
+              </div>
+              <div class="panel">
+                <h3>Why this matters</h3>
+                <ul>
+                  <li>Safer under concurrent RMI requests</li>
+                  <li>Clear transaction boundary for each client action</li>
+                  <li>Database remains unchanged when validation fails</li>
+                  <li>Easy to reason about rollback behavior</li>
+                </ul>
+              </div>
+            </div>
+            <div class="code-block">
+conn.setAutoCommit(false);
+try {
+    // execute SQL
+    conn.commit();
+} catch (SQLException e) {
+    conn.rollback();
+    throw e;
+}
+            </div>
+          </section>
+
+          <section
+            class="slide"
+            id="docker"
+            data-title="Docker Deployment on sh5"
+            data-short="Docker"
+            data-progress="Deployment story"
+          >
+            <div class="eyebrow">Slide 6</div>
+            <h2>Docker deployment on sh5</h2>
+            <div class="grid-two">
+              <div class="panel">
+                <h3>Compose services</h3>
+                <ul>
+                  <li><code>local-app</code> for the original non-distributed version</li>
+                  <li><code>rmi-server</code> for the server and database access</li>
+                  <li><code>rmi-client</code> for normal scripted or interactive calls</li>
+                  <li>extra clients for concurrency experiments</li>
+                </ul>
+              </div>
+              <div class="panel">
+                <h3>Practical deployment note</h3>
+                <p>
+                  The remote Docker Hub mirror on <code>sh5</code> returned EOF errors, so I built
+                  a small self-contained runtime bundle and deployed that image instead of relying
+                  on remote base-image pulls.
+                </p>
+              </div>
+            </div>
+            <div class="diagram">
+              <div class="diagram-node">
+                <em>Host</em>
+                <strong>sh5 Ubuntu server</strong>
+                <p>Docker engine runs the assignment stack.</p>
+              </div>
+              <div class="diagram-arrow">→</div>
+              <div class="diagram-node">
+                <em>Image</em>
+                <strong>Self-contained Java runtime</strong>
+                <p>Jar + minimal JRE + SQLite native library support.</p>
+              </div>
+              <div class="diagram-arrow">→</div>
+              <div class="diagram-node">
+                <em>Outcome</em>
+                <strong>Reproducible execution</strong>
+                <p>The same app runs without installing Java on the host.</p>
+              </div>
+            </div>
+          </section>
+
+          <section
+            class="slide"
+            id="concurrency"
+            data-title="Concurrent Transaction Experiment"
+            data-short="Experiment"
+            data-progress="Concurrency setup"
+          >
+            <div class="eyebrow">Slide 7</div>
+            <h2>Concurrent transaction experiment</h2>
+            <div class="grid-three">
+              <div class="fact-card">
+                <h3>Scenario A</h3>
+                <p><strong>read + read + read</strong></p>
+                <p>Check whether concurrent readers can proceed together.</p>
+              </div>
+              <div class="fact-card">
+                <h3>Scenario B</h3>
+                <p><strong>read + insert + update</strong></p>
+                <p>Observe how read and write requests interleave.</p>
+              </div>
+              <div class="fact-card">
+                <h3>Scenario C</h3>
+                <p><strong>insert + update + delete</strong></p>
+                <p>Push the system into competing writes and watch final consistency.</p>
+              </div>
+            </div>
+            <div class="grid-two">
+              <div class="panel">
+                <h3>What I was looking for</h3>
+                <ul>
+                  <li>Execution order in the logs</li>
+                  <li>Whether writes block or serialize</li>
+                  <li>Whether commit and rollback keep the table consistent</li>
+                </ul>
+              </div>
+              <div class="panel">
+                <h3>Expected SQLite behavior</h3>
+                <ul>
+                  <li>Reads usually coexist well</li>
+                  <li>Writes are more limited and often serialize</li>
+                  <li>Lock waits are valid experimental evidence, not necessarily a bug</li>
+                </ul>
+              </div>
+            </div>
+          </section>
+
+          <section
+            class="slide"
+            id="results"
+            data-title="Results and Verification"
+            data-short="Results"
+            data-progress="Observed outcome"
+          >
+            <div class="eyebrow">Slide 8</div>
+            <h2>Results and verification</h2>
+            <div class="grid-two">
+              <div class="panel">
+                <h3>Smoke-test results</h3>
+                <ul>
+                  <li>Original local version runs</li>
+                  <li>RMI server starts successfully</li>
+                  <li><code>list</code>, <code>find</code>, <code>add</code>, <code>update</code>, <code>delete</code> all work</li>
+                  <li>The stack now runs on <code>sh5</code> through Docker</li>
+                </ul>
+              </div>
+              <div class="panel">
+                <h3>Concurrent run result</h3>
+                <p>In the test run, the system:</p>
+                <ul>
+                  <li>updated <code>E2</code> from <code>Syst. Anal.</code> to <code>Programmer</code></li>
+                  <li>inserted <code>E9 A. Chen Programmer</code></li>
+                  <li>kept the database consistent</li>
+                </ul>
+              </div>
+            </div>
+            <div class="highlight-card">
+              <h3>Key conclusion</h3>
+              <p class="lede">
+                The assignment goals were all covered: local execution, distributed RMI, manual
+                transactions, and concurrent client behavior under SQLite.
+              </p>
+            </div>
+          </section>
+
+          <section
+            class="slide"
+            id="demo"
+            data-title="Live Demo Plan"
+            data-short="Demo"
+            data-progress="How I will show it"
+          >
+            <div class="eyebrow">Slide 9</div>
+            <h2>Live demo plan</h2>
+            <div class="command-grid">
+              <div class="command-card">
+                <h3>1. Show the running service</h3>
+                <div class="code-block">sudo docker compose ps</div>
+              </div>
+              <div class="command-card">
+                <h3>2. Read the current EMP table</h3>
+                <div class="code-block">sudo docker compose run --rm client-read</div>
+              </div>
+              <div class="command-card">
+                <h3>3. Perform one write operation</h3>
+                <div class="code-block">sudo docker compose run --rm client-insert</div>
+              </div>
+              <div class="command-card">
+                <h3>4. Optional concurrency demo</h3>
+                <div class="code-block">sudo docker compose up client-read client-insert client-update</div>
+              </div>
+            </div>
+            <div class="panel">
+              <h3>Why this demo sequence works</h3>
+              <ul>
+                <li>It proves the server is alive first.</li>
+                <li>Then it shows that remote reads work.</li>
+                <li>Finally, it shows that remote writes change the database state.</li>
+              </ul>
+            </div>
+          </section>
+
+          <section
+            class="slide"
+            id="takeaways"
+            data-title="Takeaways"
+            data-short="Takeaways"
+            data-progress="Closing"
+          >
+            <div class="eyebrow">Slide 10</div>
+            <h2>Takeaways</h2>
+            <div class="grid-two">
+              <div class="panel">
+                <h3>Technical lessons</h3>
+                <ul>
+                  <li>A local database app becomes distributed once the remote boundary is added.</li>
+                  <li>Transaction scope must be explicit and per request.</li>
+                  <li>SQLite can support this assignment well, but write concurrency is limited.</li>
+                  <li>Docker made the environment repeatable across machines.</li>
+                </ul>
+              </div>
+              <div class="panel">
+                <h3>Final statement</h3>
+                <p class="lede">
+                  I did not just “make it run.” I restructured the original EMP program into a
+                  client/server design, made transactions explicit, and used concurrent clients to
+                  study real database behavior.
+                </p>
+              </div>
+            </div>
+            <div class="tag-row">
+              <span class="tag">RMI architecture</span>
+              <span class="tag">Manual commit / rollback</span>
+              <span class="tag">Docker deployment</span>
+              <span class="tag">Concurrent experiments</span>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+
+    <div class="dots" data-dots aria-label="Slide navigation"></div>
+
+    <div class="control-strip">
+      <button class="control-button" type="button" data-prev>Previous</button>
+      <button class="control-button" type="button" data-next>Next</button>
+      <div class="jump-links" data-jumps aria-label="Jump to slide"></div>
+      <div class="toolbar-status" data-progress></div>
+    </div>
+  </body>
+</html>

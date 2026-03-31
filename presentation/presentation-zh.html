@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EMP RMI 作业 | 中文提词页</title>
+    <link rel="stylesheet" href="./shared.css" />
+    <script defer src="./shared.js"></script>
+  </head>
+  <body class="deck-body">
+    <div class="floating-toolbar">
+      <div class="toolbar-group">
+        <a class="toolbar-link" href="./index.html">返回</a>
+        <div class="toolbar-brand">EMP RMI 中文提词页</div>
+        <div class="toolbar-status" data-slide-title></div>
+      </div>
+      <div class="toolbar-group">
+        <a class="toolbar-link" href="./presentation-en.html">English deck</a>
+        <a class="toolbar-link" href="./downloads/README.md" download="README.md">下载 README</a>
+        <a class="toolbar-link" href="./downloads/emp-rmi-assignment.zip" download="emp-rmi-assignment.zip">下载源码</a>
+        <div class="toolbar-status" data-counter></div>
+      </div>
+    </div>
+
+    <main class="deck-shell">
+      <div class="deck-frame">
+        <div class="slides">
+          <section
+            class="slide"
+            id="cover-zh"
+            data-title="开场"
+            data-short="开场"
+            data-progress="先把项目一句话说清楚"
+          >
+            <div class="eyebrow">第 1 页</div>
+            <h1>把本地 SQLite 程序改成分布式 Java RMI 系统</h1>
+            <p class="slide-subtitle">
+              这页你就先定调：原来是本地 EMP 小程序，我把它改成了 RMI client/server，并补上手动事务和并发实验。
+            </p>
+            <div class="metric-grid">
+              <div class="metric">
+                <div class="metric-label">原始形态</div>
+                <div class="metric-value">本地 Java 控制台</div>
+                <div class="metric-copy">JDBC 直接操作 SQLite</div>
+              </div>
+              <div class="metric">
+                <div class="metric-label">改造后</div>
+                <div class="metric-value">RMI 分布式架构</div>
+                <div class="metric-copy">client 调 server，server 管数据库</div>
+              </div>
+              <div class="metric">
+                <div class="metric-label">部署位置</div>
+                <div class="metric-value">sh5 Docker</div>
+                <div class="metric-copy">服务器上实际可跑、可演示</div>
+              </div>
+            </div>
+            <div class="speaker-note">
+              <h3>怎么讲</h3>
+              <p>
+                先用一句英文总括全场：<strong>I upgraded a local EMP program into a distributed Java RMI system with explicit transactions and concurrency experiments.</strong>
+              </p>
+            </div>
+          </section>
+
+          <section
+            class="slide"
+            id="assignment-zh"
+            data-title="作业要求"
+            data-short="要求"
+            data-progress="按老师题目拆成四步"
+          >
+            <div class="eyebrow">第 2 页</div>
+            <h2>作业到底要求什么</h2>
+            <div class="timeline">
+              <div class="timeline-item">
+                <div class="timeline-number">1</div>
+                <div class="timeline-copy">
+                  <h3>先跑原始 EMP 程序</h3>
+                  <p>证明本地 SQLite 版本可运行，并熟悉 EMP 表。</p>
+                </div>
+              </div>
+              <div class="timeline-item">
+                <div class="timeline-number">2</div>
+                <div class="timeline-copy">
+                  <h3>改造成 Java RMI</h3>
+                  <p>把 EMP 相关操作放到远程对象上，让 client 通过网络调用。</p>
+                </div>
+              </div>
+              <div class="timeline-item">
+                <div class="timeline-number">3</div>
+                <div class="timeline-copy">
+                  <h3>支持手动事务</h3>
+                  <p>不使用默认 auto-commit，而是显式 commit / rollback。</p>
+                </div>
+              </div>
+              <div class="timeline-item">
+                <div class="timeline-number">4</div>
+                <div class="timeline-copy">
+                  <h3>做并发实验</h3>
+                  <p>多个客户端同时读写，观察 SQLite 的行为。</p>
+                </div>
+              </div>
+            </div>
+            <div class="speaker-note">
+              <h3>怎么讲</h3>
+              <p>
+                这一页不要展开太多，只要强调：这个作业不只是“把代码跑通”，而是要完成
+                <strong>架构改造 + 事务控制 + 并发观察</strong> 三件事。
+              </p>
+            </div>
+          </section>
+
+          <section
+            class="slide"
+            id="original-zh"
+            data-title="原始版本"
+            data-short="原始版"
+            data-progress="说明为什么要改"
+          >
+            <div class="eyebrow">第 3 页</div>
+            <h2>原始程序是本地一体化的</h2>
+            <div class="diagram">
+              <div class="diagram-node">
+                <em>用户</em>
+                <strong>控制台菜单</strong>
+                <p>用户在一个 Java 程序里输入操作。</p>
+              </div>
+              <div class="diagram-arrow">→</div>
+              <div class="diagram-node">
+                <em>程序</em>
+                <strong>JDBC 直接查库</strong>
+                <p>应用自己打开 SQLite 连接、自己执行 SQL。</p>
+              </div>
+              <div class="diagram-arrow">→</div>
+              <div class="diagram-node">
+                <em>存储</em>
+                <strong>本地数据库文件</strong>
+                <p>所有逻辑都发生在同一台机器里，没有真正的分布式边界。</p>
+              </div>
+            </div>
+            <div class="grid-two">
+              <div class="panel">
+                <h3>原始版本的价值</h3>
+                <ul>
+                  <li>可以先验证 EMP 表和 JDBC 驱动没问题</li>
+                  <li>方便理解已有代码和数据表</li>
+                  <li>是后面 RMI 版本的出发点</li>
+                </ul>
+              </div>
+              <div class="panel">
+                <h3>为什么不够</h3>
+                <ul>
+                  <li>没有远程接口</li>
+                  <li>client 和数据库没有隔离</li>
+                  <li>事务和并发边界不清晰</li>
+                </ul>
+              </div>
+            </div>
+            <div class="speaker-note">
+              <h3>怎么讲</h3>
+              <p>这里一句话就够：原始版适合单机，不满足“分布式 + 并发实验”的作业目标，所以必须改架构。</p>
+            </div>
+          </section>
+
+          <section
+            class="slide"
+            id="design-zh"
+            data-title="RMI 架构"
+            data-short="架构"
+            data-progress="重点讲设计决策"
+          >
+            <div class="eyebrow">第 4 页</div>
+            <h2>改造后的核心设计：client 不碰数据库</h2>
+            <div class="diagram">
+              <div class="diagram-node">
+                <em>客户端</em>
+                <strong>RMI Client</strong>
+                <p>只调用远程方法，比如 list / find / add / update / delete。</p>
+              </div>
+              <div class="diagram-arrow">→</div>
+              <div class="diagram-node">
+                <em>网络层</em>
+                <strong>Registry 1099 + Object 2001</strong>
+                <p>固定端口，Docker 里更稳定，也方便讲解。</p>
+              </div>
+              <div class="diagram-arrow">→</div>
+              <div class="diagram-node">
+                <em>服务端</em>
+                <strong>EmpService + Service Layer</strong>
+                <p>所有 SQL、校验和事务处理都在 server 端执行。</p>
+              </div>
+              <div class="diagram-arrow">→</div>
+              <div class="diagram-node">
+                <em>数据库</em>
+                <strong>SQLite</strong>
+                <p>数据库文件只由 server 访问。</p>
+              </div>
+            </div>
+            <div class="grid-two">
+              <div class="panel">
+                <h3>为什么这样设计</h3>
+                <ul>
+                  <li>符合分布式系统的 client/server 结构</li>
+                  <li>数据库细节不会暴露给 client</li>
+                  <li>事务、验证、并发控制能集中在 server</li>
+                </ul>
+              </div>
+              <div class="panel">
+                <h3>你可以强调的点</h3>
+                <ul>
+                  <li>server 才是唯一的数据所有者</li>
+                  <li>client 只看见远程方法，不直接操作 SQLite</li>
+                  <li>这样更清晰，也更接近真实系统</li>
+                </ul>
+              </div>
+            </div>
+            <div class="speaker-note">
+              <h3>怎么讲</h3>
+              <p>
+                这页是老师最可能追问的一页。你要明确说出：
+                <strong>The client does not connect to SQLite directly. The server owns the database and exposes remote operations through RMI.</strong>
+              </p>
+            </div>
+          </section>
+
+          <section
+            class="slide"
+            id="transactions-zh"
+            data-title="手动事务"
+            data-short="事务"
+            data-progress="解释 commit / rollback"
+          >
+            <div class="eyebrow">第 5 页</div>
+            <h2>手动事务是怎么做的</h2>
+            <div class="grid-two">
+              <div class="panel">
+                <h3>实现方式</h3>
+                <ul>
+                  <li>每个远程请求内部自己开一个 JDBC connection</li>
+                  <li>写操作时调用 <code>setAutoCommit(false)</code></li>
+                  <li>成功就 <code>commit()</code></li>
+                  <li>异常就 <code>rollback()</code></li>
+                  <li>最后关闭连接</li>
+                </ul>
+              </div>
+              <div class="panel">
+                <h3>为什么重要</h3>
+                <ul>
+                  <li>事务边界清晰</li>
+                  <li>多个 client 并发时更安全</li>
+                  <li>插入失败、title 非法等情况不会污染数据库</li>
+                </ul>
+              </div>
+            </div>
+            <div class="code-block">
+conn.setAutoCommit(false);
+try {
+    // execute SQL
+    conn.commit();
+} catch (SQLException e) {
+    conn.rollback();
+}
+            </div>
+            <div class="speaker-note">
+              <h3>怎么讲</h3>
+              <p>
+                关键表述是：<strong>I made transaction boundaries explicit on the server side.</strong>
+                然后再补一句：每次请求单独开连接，避免共享全局连接带来的线程问题。
+              </p>
+            </div>
+          </section>
+
+          <section
+            class="slide"
+            id="docker-zh"
+            data-title="Docker 部署"
+            data-short="部署"
+            data-progress="说明为什么能在服务器上稳定跑"
+          >
+            <div class="eyebrow">第 6 页</div>
+            <h2>我最后把它跑在 sh5 的 Docker 上</h2>
+            <div class="grid-two">
+              <div class="panel">
+                <h3>Compose 里的角色</h3>
+                <ul>
+                  <li><code>local-app</code>：原始本地版</li>
+                  <li><code>rmi-server</code>：服务端 + SQLite</li>
+                  <li><code>rmi-client</code>：正常远程调用</li>
+                  <li>多个实验 client：做并发测试</li>
+                </ul>
+              </div>
+              <div class="panel">
+                <h3>实际部署中的小坑</h3>
+                <p>
+                  远端 Docker Hub 镜像源不稳定，所以我最后做了一个自包含运行时镜像，把
+                  JRE 和 jar 一起打包，避免服务器临时拉基础镜像失败。
+                </p>
+              </div>
+            </div>
+            <div class="diagram">
+              <div class="diagram-node">
+                <em>宿主机</em>
+                <strong>sh5 Ubuntu</strong>
+                <p>不需要额外安装 Java。</p>
+              </div>
+              <div class="diagram-arrow">→</div>
+              <div class="diagram-node">
+                <em>容器</em>
+                <strong>自包含运行镜像</strong>
+                <p>jar + 最小 JRE + SQLite native 依赖。</p>
+              </div>
+              <div class="diagram-arrow">→</div>
+              <div class="diagram-node">
+                <em>结果</em>
+                <strong>稳定复现</strong>
+                <p>真正能在服务器上 build 和 run。</p>
+              </div>
+            </div>
+            <div class="speaker-note">
+              <h3>怎么讲</h3>
+              <p>如果老师只关心作业，就一句带过：Docker 保证了运行环境一致，我已经在远端服务器上实际跑通。</p>
+            </div>
+          </section>
+
+          <section
+            class="slide"
+            id="concurrency-zh"
+            data-title="并发实验"
+            data-short="并发"
+            data-progress="讲实验设计和预期"
+          >
+            <div class="eyebrow">第 7 页</div>
+            <h2>并发实验怎么做</h2>
+            <div class="grid-three">
+              <div class="fact-card">
+                <h3>场景 A</h3>
+                <p><strong>read + read + read</strong></p>
+                <p>看多个读是否能同时正常完成。</p>
+              </div>
+              <div class="fact-card">
+                <h3>场景 B</h3>
+                <p><strong>read + insert + update</strong></p>
+                <p>看读写之间如何交错。</p>
+              </div>
+              <div class="fact-card">
+                <h3>场景 C</h3>
+                <p><strong>insert + update + delete</strong></p>
+                <p>看多个写操作如何竞争数据库。</p>
+              </div>
+            </div>
+            <div class="grid-two">
+              <div class="panel">
+                <h3>主要观察点</h3>
+                <ul>
+                  <li>谁先执行、谁后执行</li>
+                  <li>写操作是否串行化</li>
+                  <li>最终表状态是否一致</li>
+                </ul>
+              </div>
+              <div class="panel">
+                <h3>结论预期</h3>
+                <ul>
+                  <li>读通常可以并发</li>
+                  <li>写更容易等待或串行</li>
+                  <li>这不是 bug，而是 SQLite 的特点</li>
+                </ul>
+              </div>
+            </div>
+            <div class="speaker-note">
+              <h3>怎么讲</h3>
+              <p>
+                这里别说“完全无锁”。你要说：<strong>SQLite handled the workload consistently, but concurrent writes are naturally more constrained.</strong>
+              </p>
+            </div>
+          </section>
+
+          <section
+            class="slide"
+            id="results-zh"
+            data-title="实验结果"
+            data-short="结果"
+            data-progress="展示你真的跑过"
+          >
+            <div class="eyebrow">第 8 页</div>
+            <h2>结果是什么</h2>
+            <div class="grid-two">
+              <div class="panel">
+                <h3>Smoke test</h3>
+                <ul>
+                  <li>原始本地版能跑</li>
+                  <li>RMI server 能启动</li>
+                  <li>list / find / add / update / delete 都成功</li>
+                  <li>整个系统已经在 sh5 上运行过</li>
+                </ul>
+              </div>
+              <div class="panel">
+                <h3>并发结果</h3>
+                <ul>
+                  <li><code>E2</code> 从 <code>Syst. Anal.</code> 更新成 <code>Programmer</code></li>
+                  <li>成功插入 <code>E9 A. Chen Programmer</code></li>
+                  <li>数据库状态保持一致</li>
+                </ul>
+              </div>
+            </div>
+            <div class="highlight-card">
+              <h3>一句话结论</h3>
+              <p class="lede">
+                这次作业要求的四件事我都覆盖了：原始程序、RMI 改造、手动事务、并发实验。
+              </p>
+            </div>
+            <div class="speaker-note">
+              <h3>怎么讲</h3>
+              <p>这页就是收证据。讲的时候多用 “verified on sh5” 这种表述，会显得更扎实。</p>
+            </div>
+          </section>
+
+          <section
+            class="slide"
+            id="demo-zh"
+            data-title="现场演示"
+            data-short="演示"
+            data-progress="告诉自己现场怎么演"
+          >
+            <div class="eyebrow">第 9 页</div>
+            <h2>现场 demo 就按这 3 步</h2>
+            <div class="command-grid">
+              <div class="command-card">
+                <h3>1. 先看服务是不是起来了</h3>
+                <div class="code-block">sudo docker compose ps</div>
+              </div>
+              <div class="command-card">
+                <h3>2. 展示当前 EMP 表</h3>
+                <div class="code-block">sudo docker compose run --rm client-read</div>
+              </div>
+              <div class="command-card">
+                <h3>3. 做一个写操作</h3>
+                <div class="code-block">sudo docker compose run --rm client-insert</div>
+              </div>
+              <div class="command-card">
+                <h3>4. 如果老师有兴趣，再跑并发</h3>
+                <div class="code-block">sudo docker compose up client-read client-insert client-update</div>
+              </div>
+            </div>
+            <div class="speaker-note">
+              <h3>怎么讲</h3>
+              <p>
+                现场不要演太多。能证明 “server 在跑、client 能读、client 能写” 就够了。并发实验可以口头讲结果，除非老师主动想看。
+              </p>
+            </div>
+          </section>
+
+          <section
+            class="slide"
+            id="takeaways-zh"
+            data-title="收尾"
+            data-short="收尾"
+            data-progress="最后一页总结"
+          >
+            <div class="eyebrow">第 10 页</div>
+            <h2>最后怎么收尾</h2>
+            <div class="grid-two">
+              <div class="panel">
+                <h3>技术收获</h3>
+                <ul>
+                  <li>本地数据库程序加上远程边界后，就变成分布式系统问题</li>
+                  <li>事务边界必须显式控制</li>
+                  <li>SQLite 可以完成作业，但并发写天然受限</li>
+                  <li>Docker 帮我把部署和复现做稳定了</li>
+                </ul>
+              </div>
+              <div class="panel">
+                <h3>最后一句英文</h3>
+                <p class="lede">
+                  I restructured the EMP program into a client/server system, made transaction
+                  boundaries explicit, and used concurrent clients to observe real SQLite behavior.
+                </p>
+              </div>
+            </div>
+            <div class="tag-row">
+              <span class="tag">RMI</span>
+              <span class="tag">Transaction control</span>
+              <span class="tag">Docker deployment</span>
+              <span class="tag">Concurrency experiment</span>
+            </div>
+            <div class="speaker-note">
+              <h3>怎么讲</h3>
+              <p>这页说完就可以停。老师如果提问，通常会围绕 “为什么数据库放 server 端” 和 “SQLite 并发有什么特点” 两个点展开。</p>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+
+    <div class="dots" data-dots aria-label="页面导航"></div>
+
+    <div class="control-strip">
+      <button class="control-button" type="button" data-prev>上一页</button>
+      <button class="control-button" type="button" data-next>下一页</button>
+      <div class="jump-links" data-jumps aria-label="跳转到页面"></div>
+      <div class="toolbar-status" data-progress></div>
+    </div>
+  </body>
+</html>
